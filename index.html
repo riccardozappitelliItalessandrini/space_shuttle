@@ -9,5 +9,32 @@
     <canvas id="canvas" width="400px" height="400px">
 
     </canvas>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const shipImage = new Image();
+        shipImage.src = "ship.png";
+        context = canvas.getContext("2d")
+
+        document.addEventListener("keydown", (event)=>{
+            keydown(event)
+        })
+
+        function keydown(e) {
+            console.log(e.key)
+        }
+
+        const ship = {
+            x:0, y:0, vx:0, vy: 0,
+            draw: function(ctx){
+                ctx.drawImage(shipImage, this.x, this.y, 40, 40)
+            }
+        }
+
+        function draw(){
+            ship.draw(context)
+            window.requestAnimationFrame(draw);
+        }
+        window.requestAnimationFrame(draw);
+    </script>
 </body>
 </html>
