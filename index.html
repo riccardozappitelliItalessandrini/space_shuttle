@@ -13,26 +13,95 @@
     <script>
         const canvas = document.getElementById("canvas");
         const shipImage = new Image();
+        const bulletImage = new Image();
         shipImage.src = "ship.png";
+        bulletImage.src = "bullet.png";
         context = canvas.getContext("2d")
+        speed = 5
+        bspeed = -10
+        bullets = []
 
-        document.addEventListener("keydown", (event)=>{
-            keydown(event)
-        })
+        document.body.addEventListener("keydown", keydown)
+        document.body.addEventListener("keyup", keyup)
 
         function keydown(e) {
             console.log(e.key)
+            switch(event.key){
+                case "ArrowLeft":
+                    ship.vx -= speed
+                    break
+
+                case "ArrowRight":
+                    ship.vx += speed
+                    break
+
+                case "ArrowUp":
+                    ship.vy -= speed
+                    break
+
+                case "ArrowDown":
+                    ship.vy += speed
+                    break
+                    
+                case "f":
+                    ship.shot()
+                    break
+            }
+        }
+
+        function keyup(e) {
+            ship.vx = 0;
+            ship.vy = 0;
         }
 
         const ship = {
-            x:0, y:0, vx:0, vy: 0,
-            draw: function(ctx){
-                ctx.drawImage(shipImage, this.x, this.y, 40, 40)
+            w: 40, h: 40,
+            ctx: context,
+            x:canvas.width/2, y: canvas.height-40, vx:0, vy: 0,
+            draw: function(){
+                this.ctx.drawImage(shipImage, this.x, this.y, this.w, this.h)
+            },
+            move: function(ctx){
+                this.x+=this.vx
+                this.y+=this.vy
+
+                bullets.forEach(element => {
+                    element.draw(ctx)
+                    element.move()
+                });
+            },
+            shot: function(){
+                bullet = new Bullet(this.x, this.y, 0, bspeed)
+                bullets.push(bullet)
+            }
+        }
+
+        class Bullet {
+            x;
+            y;
+            vx;
+            vy;
+            w;
+            h;
+            constructor (x, y, vx, vy){
+                this.x=x; this.y=y;
+                this.vx=vx; this.vy=vy;
+                this.w = 50; this.h = 50;
+            }
+            draw(ctx) {
+                //ctx.fillRect(this.x, this.y, this.w, this.h)
+                ctx.drawImage(bulletImage, this.x, this.y, this.w, this.h)
+            }
+            move() {
+                this.x += this.vx
+                this.y += this.vy
             }
         }
 
         function draw(){
+            context.clearRect(0,0,canvas.width, canvas.height)
             ship.draw(context)
+            ship.move(context)
             window.requestAnimationFrame(draw);
         }
         window.requestAnimationFrame(draw);
