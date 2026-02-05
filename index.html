@@ -8,18 +8,21 @@
 </head>
 <body>
     <canvas id="canvas" width="400px" height="400px">
-
     </canvas>
     <script>
         const canvas = document.getElementById("canvas");
         const shipImage = new Image();
         const bulletImage = new Image();
+        const enemyImage = new Image();
         shipImage.src = "img/ship.png";
         bulletImage.src = "img/bullet.png";
+        enemyImage.src = "img/enemy.png"
         context = canvas.getContext("2d")
-        speed = 5
-        bspeed = -10
+        ship_speed = 5
+        bullet_speed = 5
+        enemy_speed = 5
         bullets = []
+        enemies = []
 
         document.body.addEventListener("keydown", keydown)
         document.body.addEventListener("keyup", keyup)
@@ -28,19 +31,19 @@
             console.log(e.key)
             switch(event.key){
                 case "ArrowLeft":
-                    ship.vx -= speed
+                    ship.vx -= ship_speed
                     break
 
                 case "ArrowRight":
-                    ship.vx += speed
+                    ship.vx += ship_speed
                     break
 
                 case "ArrowUp":
-                    ship.vy -= speed
+                    ship.vy -= ship_speed
                     break
 
                 case "ArrowDown":
-                    ship.vy += speed
+                    ship.vy += ship_speed
                     break
                     
                 case "f":
@@ -71,12 +74,12 @@
                 });
             },
             shot: function(){
-                bullet = new Bullet(this.x, this.y, 0, bspeed)
+                bullet = new Bullet(this.x, this.y, 0, -bullet_speed)
                 bullets.push(bullet)
             }
         }
 
-        class Bullet {
+        class Entity {
             x;
             y;
             vx;
@@ -88,20 +91,45 @@
                 this.vx=vx; this.vy=vy;
                 this.w = 50; this.h = 50;
             }
-            draw(ctx) {
-                //ctx.fillRect(this.x, this.y, this.w, this.h)
-                ctx.drawImage(bulletImage, this.x, this.y, this.w, this.h)
-            }
+            draw(ctx) {}
             move() {
                 this.x += this.vx
                 this.y += this.vy
             }
         }
 
+        class Bullet extends Entity { //si ho deciso di imparare le sottoclassi
+            draw(ctx) {
+                ctx.drawImage(bulletImage, this.x, this.y, this.w, this.h)
+            }
+        }
+
+        class Enemy extends Entity{ //visto? utile no?????????
+            move(canvas) {
+                this.x += this.vx
+                if (this.vx > 0 && this.x > canvas.width-this.w){
+                    this.vx = -this.vx
+                } else if (this.vx < 0 && this.x <= 0) {
+                    this.vx = -this.vx
+                }
+            }
+            draw(ctx) {
+                ctx.drawImage(enemyImage, this.x, this.y, this.w, this.h)
+            }
+        }
+
+        enemies.push(
+            new Enemy(0, 0, enemy_speed, 0)
+        )
+
         function draw(){
             context.clearRect(0,0,canvas.width, canvas.height)
             ship.draw(context)
             ship.move(context)
+            enemies.forEach(element => {
+                element.draw(context)
+                element.move(canvas)
+            });
             window.requestAnimationFrame(draw);
         }
         window.requestAnimationFrame(draw);
