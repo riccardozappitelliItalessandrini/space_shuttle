@@ -9,11 +9,13 @@
 <body>
     <canvas id="canvas" width="800vh" height="400vh">
     </canvas>
+    <input type="button" value="GIOCA" id="playbut">
     <script>
         const canvas = document.getElementById("canvas");
         const shipImage = new Image();
         const bulletImage = new Image();
         const enemyImage = new Image();
+        const playbut = document.getElementById("playbut");
         shipImage.src = "img/ship.png";
         bulletImage.src = "img/bullet.png";
         enemyImage.src = "img/enemy.png";
@@ -236,7 +238,10 @@
             })
             window.requestAnimationFrame(draw);
         }
-        window.requestAnimationFrame(draw);
+        playbut.addEventListener("click", () =>{
+            window.requestAnimationFrame(draw);
+        }
+        )
     </script>
 </body>
 </html>
