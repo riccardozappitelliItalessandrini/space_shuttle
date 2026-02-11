@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <canvas id="canvas" width="400px" height="400px">
+    <canvas id="canvas" width="800vh" height="400vh">
     </canvas>
     <script>
         const canvas = document.getElementById("canvas");
@@ -16,19 +16,22 @@
         const enemyImage = new Image();
         shipImage.src = "img/ship.png";
         bulletImage.src = "img/bullet.png";
-        enemyImage.src = "img/enemy.png"
-        context = canvas.getContext("2d")
-        ship_speed = 5
-        bullet_speed = 5
-        enemy_speed = 5
-        bullets = []
-        enemies = []
+        enemyImage.src = "img/enemy.png";
+        context = canvas.getContext("2d");
+        let gameOver = false;
+        let jumpscareTimer = 0;
+        ship_speed = 5;
+        bullet_speed = 7;
+        enemy_speed = 10;
+        bullets = [];
+        enemies = [];
+        enemies_bullets = [];
 
         document.body.addEventListener("keydown", keydown)
         document.body.addEventListener("keyup", keyup)
 
         function keydown(e) {
-            console.log(e.key)
+            console.log("Pressed key: ", e.key)
             switch(event.key){
                 case "ArrowLeft":
                     ship.vx -= ship_speed
@@ -57,6 +60,48 @@
             ship.vy = 0;
         }
 
+        function drawJumpscare(ctx) {
+            ctx.fillStyle = "red";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const shakeX = (Math.random() - 0.5) * 20;
+            const shakeY = (Math.random() - 0.5) * 20;
+
+            ctx.save();
+            ctx.translate(shakeX, shakeY);
+            ctx.fillStyle = "black";
+            ctx.font = "bold 60px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("SEI GAY", canvas.width / 2, canvas.height / 2);
+
+            ctx.restore();
+        }
+
+
+        function boxDistance(a, b) {
+            const dx = Math.max(
+                b.x - (a.x + a.w),
+                a.x - (b.x + b.w),
+                0
+            );
+
+            const dy = Math.max(
+                b.y - (a.y + a.h),
+                a.y - (b.y + b.h),
+                0
+            );
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function visible(entity) {
+            return (
+                entity.x + entity.w > 0 &&
+                entity.x < canvas.width &&
+                entity.y + entity.h > 0 &&
+                entity.y < canvas.height
+            );
+        }
+
         const ship = {
             w: 40, h: 40,
             ctx: context,
@@ -65,16 +110,16 @@
                 this.ctx.drawImage(shipImage, this.x, this.y, this.w, this.h)
             },
             move: function(ctx){
-                this.x+=this.vx
-                this.y+=this.vy
+                this.x+=this.vx;
+                this.y+=this.vy;
 
-                bullets.forEach(element => {
-                    element.draw(ctx)
-                    element.move()
+                bullets.forEach(bullet => {
+                    bullet.draw(ctx);
+                    bullet.move();
                 });
             },
             shot: function(){
-                bullet = new Bullet(this.x, this.y, 0, -bullet_speed)
+                bullet = new Bullet(this.x, this.y, 0, -bullet_speed, 20, 20)
                 bullets.push(bullet)
             }
         }
@@ -86,10 +131,10 @@
             vy;
             w;
             h;
-            constructor (x, y, vx, vy){
+            constructor (x, y, vx, vy, w, h){
                 this.x=x; this.y=y;
                 this.vx=vx; this.vy=vy;
-                this.w = 50; this.h = 50;
+                this.w = w; this.h = 50;
             }
             draw(ctx) {}
             move() {
@@ -101,6 +146,13 @@
         class Bullet extends Entity { //si ho deciso di imparare le sottoclassi
             draw(ctx) {
                 ctx.drawImage(bulletImage, this.x, this.y, this.w, this.h)
+                if (!visible(this)){
+                    const index = bullets.indexOf(this);
+                    if (index !== -1) {
+                        bullets.splice(index, 1);
+                        console.log("Bullet Removed")
+                    }
+                }
             }
         }
 
@@ -114,22 +166,58 @@
                 }
             }
             draw(ctx) {
-                ctx.drawImage(enemyImage, this.x, this.y, this.w, this.h)
+                ctx.drawImage(enemyImage, this.x, this.y, this.w, this.h);
+                enemies_bullets.forEach(bullet => {
+                    bullet.draw(ctx);
+                    bullet.move();
+                });
+            }
+            shoot(){
+                console.log("Enemy shot")
+                enemies_bullets.push(
+                    new Bullet(this.x, this.y, 0, bullet_speed, 20, 20)
+                );
             }
         }
 
         enemies.push(
-            new Enemy(0, 0, enemy_speed, 0)
+            new Enemy(0, 0, enemy_speed, 0, 70, 70),
         )
 
         function draw(){
             context.clearRect(0,0,canvas.width, canvas.height)
+            if (gameOver) {
+                drawJumpscare(context);
+                jumpscareTimer--;
+
+                if (jumpscareTimer <= 0) {
+                    gameOver = false; // remove if you want permanent freeze
+                }
+
+                requestAnimationFrame(draw);
+                return;
+            }
             ship.draw(context)
             ship.move(context)
-            enemies.forEach(element => {
-                element.draw(context)
-                element.move(canvas)
+            bullets.forEach((bullet, bi) => {
+                enemies.forEach((enemy, ei) => {
+                    d = boxDistance(bullet, enemy)
+                    console.log("Bullet distance: ", d)
+                    if (d === 0) {
+                        gameOver = true;
+                        jumpscareTimer = 60;
+                        enemies.splice(ei, 1);
+                        bullets.splice(bi, 1);
+                    }
+                });
             });
+            enemies.forEach(enemy =>{
+                enemy.draw(context)
+                enemy.move(canvas)
+                if (enemy.x === ship.x) {
+                    setTimeout(enemy.shoot, 50)
+                }
+            })
             window.requestAnimationFrame(draw);
         }
         window.requestAnimationFrame(draw);
