@@ -17,6 +17,8 @@
         shipImage.src = "img/ship.png";
         bulletImage.src = "img/bullet.png";
         enemyImage.src = "img/enemy.png";
+        gameOverText = "SEI GAY"
+        gameOverColor = "red"
         context = canvas.getContext("2d");
         let gameOver = false;
         let jumpscareTimer = 0;
@@ -34,22 +36,22 @@
             console.log("Pressed key: ", e.key)
             switch(event.key){
                 case "ArrowLeft":
-                    ship.vx -= ship_speed
+                    ship.vx = -ship_speed
                     break
 
                 case "ArrowRight":
-                    ship.vx += ship_speed
+                    ship.vx = +ship_speed
                     break
 
                 case "ArrowUp":
-                    ship.vy -= ship_speed
+                    ship.vy = -ship_speed
                     break
 
                 case "ArrowDown":
-                    ship.vy += ship_speed
+                    ship.vy = +ship_speed
                     break
                     
-                case "f":
+                case "f" || "space":
                     ship.shot()
                     break
             }
@@ -61,7 +63,7 @@
         }
 
         function drawJumpscare(ctx) {
-            ctx.fillStyle = "red";
+            ctx.fillStyle = gameOverColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const shakeX = (Math.random() - 0.5) * 20;
@@ -70,11 +72,14 @@
             ctx.save();
             ctx.translate(shakeX, shakeY);
             ctx.fillStyle = "black";
-            ctx.font = "bold 60px Arial";
+            ctx.font = "bold 40px Arial";
             ctx.textAlign = "center";
-            ctx.fillText("SEI GAY", canvas.width / 2, canvas.height / 2);
+            ctx.fillText(gameOverText, canvas.width / 2, canvas.height / 2);
 
             ctx.restore();
+            setTimeout(
+                ()=>{window.location.reload()}, 80
+            )
         }
 
 
@@ -150,7 +155,6 @@
                     const index = bullets.indexOf(this);
                     if (index !== -1) {
                         bullets.splice(index, 1);
-                        console.log("Bullet Removed")
                     }
                 }
             }
@@ -173,7 +177,6 @@
                 });
             }
             shoot(){
-                console.log("Enemy shot")
                 enemies_bullets.push(
                     new Bullet(this.x, this.y, 0, bullet_speed, 20, 20)
                 );
@@ -202,20 +205,33 @@
             bullets.forEach((bullet, bi) => {
                 enemies.forEach((enemy, ei) => {
                     d = boxDistance(bullet, enemy)
-                    console.log("Bullet distance: ", d)
                     if (d === 0) {
                         gameOver = true;
                         jumpscareTimer = 60;
+                        gameOverText = "HAI VINTO E NON FAI SCHIFO"
+                        gameOverColor = "green"
                         enemies.splice(ei, 1);
                         bullets.splice(bi, 1);
                     }
                 });
             });
+
+            enemies_bullets.forEach((bullet, bi) => {
+                d = boxDistance(bullet, ship)
+                if (d === 0) {
+                    gameOver = true;
+                    jumpscareTimer = 60;
+                    gameOverText = "HAI PERSO E FAI SCHIFO"
+                    gameOverColor = "red"
+                    bullets.splice(bi, 1);
+                }
+            });
+
             enemies.forEach(enemy =>{
                 enemy.draw(context)
                 enemy.move(canvas)
-                if (enemy.x === ship.x) {
-                    setTimeout(enemy.shoot, 50)
+                if (Math.abs((enemy.x + enemy.w / 2) - (ship.x + ship.w / 2)) < 10) {
+                    setTimeout(() => enemy.shoot(), 10)
                 }
             })
             window.requestAnimationFrame(draw);
